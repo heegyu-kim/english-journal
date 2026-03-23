@@ -4,16 +4,22 @@ export default async function handler(req, res) {
   const { korean } = req.body;
   if (!korean) return res.status(400).json({ error: 'No text provided' });
 
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) {
+    console.error('ANTHROPIC_API_KEY is not set');
+    return res.status(500).json({ error: 'API key not configured' });
+  }
+
   try {
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-api-key': process.env.ANTHROPIC_API_KEY,
+        'x-api-key': apiKey,
         'anthropic-version': '2023-06-01',
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
+        model: 'claude-opus-4-6',
         max_tokens: 2000,
         messages: [{
           role: 'user',
@@ -44,14 +50,31 @@ ${korean}`
     });
 
     const data = await response.json();
-    if (!data.content?.[0]?.text) throw new Error('No content');
+
+    // Log full response for debugging
+    console.log('Anthropic response status:', response.status);
+    console.log('Anthropic response body:', JSON.stringify(data));
+
+    if (!response.ok) {
+      console.error('Anthropic API error:', data);
+      return res.status(500).json({ error: `Anthropic error: ${data?.error?.message || response.status}` });
+    }
+
+    if (!data.content?.[0]?.text) {
+      console.error('No content in response:', data);
+      return res.status(500).json({ error: 'No content returned' });
+    }
 
     const raw = data.content[0].text
-      .replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/```\s*$/i, '').trim();
+      .replace(/^```json\s*/i, '')
+      .replace(/^```\s*/i, '')
+      .replace(/```\s*$/i, '')
+      .trim();
+
     const parsed = JSON.parse(raw);
     res.status(200).json(parsed);
   } catch (e) {
-    console.error(e);
-    res.status(500).json({ error: 'Translation failed' });
+    console.error('Unexpected error:', e);
+    res.status(500).json({ error: e.message });
   }
 }
