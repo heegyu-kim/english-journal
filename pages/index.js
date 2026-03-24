@@ -21,6 +21,8 @@ function nowTimeStr() {
 // ── Print Sheet ───────────────────────────────────────────────────────────────
 function PrintSheet({ entry }) {
   if (!entry) return null;
+  const displayEnglish = entry.feedback?.revised || entry.english;
+  const isRevised = !!entry.feedback?.revised;
   return (
     <div id="print-sheet" style={{display:'none'}}>
       <div className="print-header">
@@ -29,8 +31,8 @@ function PrintSheet({ entry }) {
       </div>
       <div className="print-section-label">Original · 한국어</div>
       <div className="print-ko">{entry.korean}</div>
-      <div className="print-section-label">English Translation</div>
-      <div className="print-en">{entry.english}</div>
+      <div className="print-section-label">{isRevised ? 'Revised English · 최종본' : 'English Translation'}</div>
+      <div className="print-en">{displayEnglish}</div>
       <hr className="print-divider" />
       <div className="print-practice-label">Handwriting Practice · 필사 공간</div>
       <div className="print-lines">
@@ -334,7 +336,8 @@ function EntryView({ entry, onType, onDelete, onUpdate, onEdit }) {
 function TypingView({ entry, onBack }) {
   const [typed, setTyped] = useState('');
   const [finished, setFinished] = useState(false);
-  const target = entry.english || '';
+  const target = entry.feedback?.revised || entry.english || '';
+  const isRevised = !!entry.feedback?.revised;
   const correct = typed.split('').filter((c,i)=>c===target[i]).length;
   const accuracy = typed.length>0 ? Math.round((correct/typed.length)*100) : 100;
   const progress = Math.min(100, Math.round((typed.length/target.length)*100));
@@ -349,11 +352,13 @@ function TypingView({ entry, onBack }) {
       <div className="page-header" style={{display:'flex', justifyContent:'space-between', alignItems:'flex-start'}}>
         <div>
           <div className="page-title">Typing Practice</div>
-          <div className="page-meta">{formatDate(entry.date)} · 아래 영문을 보면서 타이핑하세요</div>
+          <div className="page-meta">
+            {formatDate(entry.date)} · {isRevised ? '최종본 기준' : '번역본 기준'} · 아래 영문을 보면서 타이핑하세요
+          </div>
         </div>
         <button className="btn btn-ghost btn-sm" onClick={onBack}>← Back</button>
       </div>
-      <div className="section-tag">Reference Text</div>
+      <div className="section-tag">{isRevised ? 'Revised English · 최종본' : 'Reference Text'}</div>
       <div className="typing-source">{target}</div>
       <div className="section-tag">타이핑 영역</div>
       {finished ? (
