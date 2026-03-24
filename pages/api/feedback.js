@@ -17,12 +17,12 @@ export default async function handler(req, res) {
       },
       body: JSON.stringify({
         model: 'claude-opus-4-6',
-        max_tokens: 1500,
+        max_tokens: 2000,
         messages: [{
           role: 'user',
-          content: `You are a warm, encouraging writing mentor for 희규, a Korean architect who is preparing to study at Harvard GSD's MDes program. He is practicing writing English journal entries to improve his academic English before matriculating in Fall 2026.
+          content: `You are a warm, encouraging writing mentor for 희규, a Korean architect preparing to study at Harvard GSD's MDes program. He is practicing English journal writing to improve his academic English before matriculating in Fall 2026.
 
-You will receive his original Korean journal entry and its English translation. Please evaluate the English translation and provide thoughtful, constructive feedback.
+Evaluate the English translation below and provide feedback. Then produce a fully revised final version incorporating all your suggestions.
 
 Korean original:
 ${korean}
@@ -50,11 +50,12 @@ Return ONLY a raw JSON object (no markdown fences, no explanation):
       "improved": "...",
       "reason": "..."
     }
-  ]
+  ],
+  "revised": "The complete final English text with ALL suggestions applied. This should read as a polished, natural, academic-quality journal entry. Same tone and content as the original, just refined."
 }
 
 Star rating guide:
-5 = Excellent, natural and expressive English, ready for GSD
+5 = Excellent, natural and expressive, ready for GSD
 4 = Good, minor improvements possible
 3 = Decent, some awkward phrasing
 2 = Needs work, frequent unnatural expressions
@@ -64,7 +65,7 @@ Star rating guide:
     });
 
     const data = await response.json();
-    console.log('Anthropic feedback response status:', response.status);
+    console.log('Anthropic feedback status:', response.status);
 
     if (!response.ok) {
       console.error('Anthropic API error:', JSON.stringify(data));
