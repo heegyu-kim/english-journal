@@ -42,7 +42,7 @@ function PrintSheet({ entry }) {
 }
 
 // ── Sidebar ───────────────────────────────────────────────────────────────────
-function Sidebar({ entries, selectedId, onSelect, onNew }) {
+function Sidebar({ entries, selectedId, onSelect, onNew, onExport, onImport }) {
   return (
     <div className="sidebar">
       <div className="sidebar-logo">English<br />Journal</div>
@@ -62,10 +62,25 @@ function Sidebar({ entries, selectedId, onSelect, onNew }) {
           </div>
         </>
       )}
-      <button className="new-btn" onClick={onNew} style={{marginTop: entries.length===0?'auto':'16px'}}>
-        <span className="new-btn-icon">＋</span>
-        New Entry
-      </button>
+      <div style={{marginTop:'auto', display:'flex', flexDirection:'column'}}>
+        <button className="new-btn" onClick={onNew} style={{paddingTop:'24px', borderTop:'1px solid #2E2C29', marginTop:'0'}}>
+          <span className="new-btn-icon">＋</span>
+          New Entry
+        </button>
+        <div style={{display:'flex', alignItems:'center', borderTop:'1px solid #2E2C29', marginTop:'10px', paddingTop:'10px', gap:'4px'}}>
+          <button onClick={onExport}
+            style={{flex:1, background:'none', border:'none', cursor:'pointer', fontFamily:"'JetBrains Mono',monospace", fontSize:'9px', letterSpacing:'0.12em', textTransform:'uppercase', color:'#5A5550', padding:'4px 0', textAlign:'center', transition:'color 0.15s'}}
+            onMouseEnter={e=>e.currentTarget.style.color='#C8C4BC'} onMouseLeave={e=>e.currentTarget.style.color='#5A5550'}>
+            ↓ Backup
+          </button>
+          <span style={{color:'#2E2C29'}}>|</span>
+          <label style={{flex:1, cursor:'pointer', fontFamily:"'JetBrains Mono',monospace", fontSize:'9px', letterSpacing:'0.12em', textTransform:'uppercase', color:'#5A5550', padding:'4px 0', textAlign:'center', transition:'color 0.15s'}}
+            onMouseEnter={e=>e.currentTarget.style.color='#C8C4BC'} onMouseLeave={e=>e.currentTarget.style.color='#5A5550'}>
+            ↑ Restore
+            <input type="file" accept=".json" onChange={onImport} style={{display:'none'}} />
+          </label>
+        </div>
+      </div>
     </div>
   );
 }
@@ -409,6 +424,38 @@ export default function Home() {
     setView(updated.length>0 ? 'entry' : 'empty');
   };
 
+  // 백업 — JSON 파일로 다운로드
+  const handleExport = () => {
+    const json = JSON.stringify(entries, null, 2);
+    const blob = new Blob([json], {type:'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `english-journal-backup-${todayStr()}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  // 복원 — JSON 파일에서 불러오기
+  const handleImport = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      try {
+        const list = JSON.parse(ev.target.result);
+        if (!Array.isArray(list)) throw new Error('Invalid format');
+        persist(list);
+        if (list.length > 0) { setSelected(list[list.length-1]); setView('entry'); }
+        alert(`${list.length}개의 일기를 불러왔습니다.`);
+      } catch {
+        alert('파일을 불러오지 못했습니다. 올바른 백업 파일인지 확인해주세요.');
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = '';
+  };
+
   if (!ready) return null;
 
   return (
@@ -423,7 +470,9 @@ export default function Home() {
       <div className="app">
         <Sidebar entries={entries} selectedId={selected?.id}
           onSelect={e=>{setSelected(e);setView('entry');}}
-          onNew={()=>{setSelected(null);setView('write');}} />
+          onNew={()=>{setSelected(null);setView('write');}}
+          onExport={handleExport}
+          onImport={handleImport} />
 
         {view==='empty' && <div className="main"><EmptyState onNew={()=>setView('write')} /></div>}
 
