@@ -235,11 +235,11 @@ function ThoughtsTab({ entry, onUpdate }) {
             <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:'16px', marginBottom:'10px'}}>
               <div>
                 <div style={{fontSize:'9px', letterSpacing:'0.14em', textTransform:'uppercase', color:'var(--text2)', marginBottom:'6px'}}>Original</div>
-                <div style={{fontFamily:"'EB Garamond', Georgia, serif", fontSize:'16px', fontStyle:'italic', color:'var(--text2)', lineHeight:'1.6', textDecoration:'line-through', textDecorationColor:'var(--error)', textDecorationThickness:'1px'}}>"{s.original}"</div>
+                <div style={{fontFamily:"'EB Garamond', Georgia, serif", fontSize:'16px', color:'var(--text2)', lineHeight:'1.6', textDecoration:'line-through', textDecorationColor:'var(--error)', textDecorationThickness:'1px'}}>"{s.original}"</div>
               </div>
               <div>
                 <div style={{fontSize:'9px', letterSpacing:'0.14em', textTransform:'uppercase', color:'var(--accent)', marginBottom:'6px'}}>Improved</div>
-                <div style={{fontFamily:"'EB Garamond', Georgia, serif", fontSize:'16px', fontStyle:'italic', color:'var(--text)', lineHeight:'1.6'}}>"{s.improved}"</div>
+                <div style={{fontFamily:"'EB Garamond', Georgia, serif", fontSize:'16px', color:'var(--text)', lineHeight:'1.6'}}>"{s.improved}"</div>
               </div>
             </div>
             <div style={{fontSize:'11px', color:'var(--warm)', fontFamily:"'Noto Sans KR', sans-serif"}}>↳ {s.reason}</div>
@@ -277,6 +277,11 @@ function EntryView({ entry, onType, onDelete, onUpdate, onEdit }) {
         <button className={`tab${tab==='thoughts'?' active':''}`} onClick={()=>setTab('thoughts')}>
           ✦ Claude의 생각{entry.feedback ? ` ★${entry.feedback.stars}` : ''}
         </button>
+        {entry.feedback?.revised && (
+          <button className={`tab${tab==='revised'?' active':''}`} onClick={()=>setTab('revised')}>
+            최종본
+          </button>
+        )}
       </div>
 
       {tab==='translation' && (
@@ -308,6 +313,19 @@ function EntryView({ entry, onType, onDelete, onUpdate, onEdit }) {
         </>
       )}
       {tab==='thoughts' && <ThoughtsTab entry={entry} onUpdate={onUpdate} />}
+      {tab==='revised' && entry.feedback?.revised && (
+        <>
+          <div className="section-tag">Original · 한국어</div>
+          <div className="block-ko" style={{marginBottom:'28px'}}>{entry.korean}</div>
+          <div className="section-tag">Revised English · 최종본</div>
+          <div className="block-en" style={{borderLeftColor:'var(--warm)'}}>
+            {entry.feedback.revised}
+          </div>
+          <div style={{marginTop:'16px', fontSize:'11px', color:'var(--text2)', fontFamily:"'Noto Sans KR', sans-serif", lineHeight:'1.7'}}>
+            ↳ Claude의 피드백을 반영하여 다듬어진 최종 영문입니다.
+          </div>
+        </>
+      )}
     </div>
   );
 }
